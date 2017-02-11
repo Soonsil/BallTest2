@@ -15,29 +15,30 @@ import io.github.avantgarde95.balltest.renderer.MyGLRenderer;
  */
 
 public class Model {
-    private MyGLRenderer renderer;
-    private int program;
+    protected MyGLRenderer renderer;
+    protected int program;
 
-    private FloatBuffer vertexBuffer;
-    private FloatBuffer normalBuffer;
-    private FloatBuffer textureBuffer;
+    protected FloatBuffer vertexBuffer;
+    protected FloatBuffer normalBuffer;
+    protected FloatBuffer textureBuffer;
 
-    private int coordsPerVertex = 3;
-    private int vertexStride = coordsPerVertex * 4;
+    protected int coordsPerVertex = 3;
+    protected int vertexStride = coordsPerVertex * 4;
 
-    private float[] color = {0.0f, 0.0f, 1.0f};
+    protected float[] color = {0.0f, 0.0f, 1.0f};
 
-    private float[] vertices = new float[]{};
-    private float[] normals = new float[]{};
-    private float[] textures = new float[]{};
+    protected float[] vertices = new float[]{};
+    protected float[] normals = new float[]{};
+    protected float[] textures = new float[]{};
+    protected float border[][];
 
-    private float[] modelMatrix = new float[16];
-    private float[] normalMatrix = new float[16];
+    protected float[] modelMatrix = new float[16];
+    protected float[] normalMatrix = new float[16];
 
-    private String vertexShader = "basic-vshader.glsl";
-    private String fragmentShader = "basic-fshader.glsl";
+    protected String vertexShader = "basic-vshader.glsl";
+    protected String fragmentShader = "basic-fshader.glsl";
 
-    private int drawType = GLES20.GL_TRIANGLES;
+    protected int drawType = GLES20.GL_TRIANGLES;
 
     public Model(MyGLRenderer renderer) {
         this.renderer = renderer;
@@ -58,6 +59,9 @@ public class Model {
 
     public void setMatrix(float[] mat) {
         System.arraycopy(mat, 0, modelMatrix, 0, 16);
+    }
+    public void setBorder(float[][] border){
+        this.border = border;
     }
 
     public void setMatrix(float dx, float dy, float dz) {
@@ -127,7 +131,7 @@ public class Model {
         GLES20.glDisableVertexAttribArray(normalHandle);
     }
 
-    private void normalMatrix(float[] dst, int dstOffset, float[] src, int srcOffset) {
+    public void normalMatrix(float[] dst, int dstOffset, float[] src, int srcOffset) {
         Matrix.invertM(dst, dstOffset, src, srcOffset);
 
         dst[12] = 0;
@@ -139,13 +143,13 @@ public class Model {
     }
 
 
-    private void makeBuffer() {
+    public void makeBuffer() {
         vertexBuffer = genBuffer(vertices);
         normalBuffer = genBuffer(normals);
         textureBuffer = genBuffer(textures);
     }
 
-    private void makeShader() {
+    public void makeShader() {
         int vs = renderer.loadShaderFromFile(GLES20.GL_VERTEX_SHADER, vertexShader);
         int fs = renderer.loadShaderFromFile(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
 
@@ -156,7 +160,7 @@ public class Model {
         GLES20.glLinkProgram(program);
     }
 
-    private FloatBuffer genBuffer(float[] arr) {
+    public FloatBuffer genBuffer(float[] arr) {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(arr.length * 4);
         byteBuffer.order(ByteOrder.nativeOrder());
 
@@ -165,5 +169,19 @@ public class Model {
         floatBuffer.position(0);
 
         return floatBuffer;
+    }
+
+    public float[][] getBorder(){
+        float[][] matborder = new float[border.length][2];
+
+        for(int i=0; i<border.length; i++){
+            float[] point = new float[]{border[i][0], border[i][1], 0.0f, 1.0f};
+            float[] matpoint = new float[4];
+            Matrix.multiplyMV(matpoint, 0, modelMatrix, 0, point, 0);
+            matborder[i][0] = matpoint[0];
+            matborder[i][1] = matpoint[1];
+        }
+
+        return matborder;
     }
 }
